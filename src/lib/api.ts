@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Get API URL from environment variable
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+if (!apiUrl && typeof window !== 'undefined') {
+  console.warn('NEXT_PUBLIC_API_URL environment variable is not set');
+}
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
+  baseURL: apiUrl || 'http://localhost:3001/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
