@@ -7,7 +7,7 @@ if (!apiUrl && typeof window !== 'undefined') {
 }
 
 const api = axios.create({
-  baseURL: apiUrl || 'http://localhost:3001/api/v1',
+  baseURL: apiUrl || 'http://backend_lamtek.paas.hcm-lab.id/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
