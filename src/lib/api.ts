@@ -59,7 +59,17 @@ function createCrudApi<T = any>(basePath: string) {
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (data: { name: string; email: string; password: string; tenantId?: string }) =>
+  register: (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    tenant: {
+      name: string;
+      type: string;
+      address: string;
+    };
+  }) =>
     api.post('/auth/register', data),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),

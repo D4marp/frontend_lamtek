@@ -43,25 +43,116 @@ export default function RegisterPage() {
       return;
     }
 
+    // Validate checkbox
+    const form = e.currentTarget as HTMLFormElement;
+    const checkbox = form.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    if (checkbox && !checkbox.checked) {
+      toast.error('Anda harus menyetujui syarat dan ketentuan');
+      return;
+    }
+
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    toast.success('Pendaftaran berhasil! Silakan cek email untuk verifikasi.');
-    router.push('/login');
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        tenant: {
+          name: formData.tenantName,
+          type: formData.tenantType,
+          address: formData.tenantAddress,
+        },
+      };
+
+      console.log('📤 Sending registration payload:', payload);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('📥 Response status:', response.status);
+
+      if (!response.ok) {
+        let errorMessage = 'Pendaftaran gagal';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || error.error || JSON.stringify(error);
+          console.error('❌ Error response:', error);
+        } catch (parseError) {
+          const text = await response.text();
+          console.error('❌ Error text:', text);
+          errorMessage = text || `HTTP ${response.status}`;
+        }
+        toast.error(errorMessage);
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('✅ Registration success:', data);
+      
+      // Save token and user data
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('✅ Token saved');
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('✅ User data saved');
+      }
+      if (data.user?.tenantId) {
+        localStorage.setItem('tenantId', data.user.tenantId);
+        console.log('✅ Tenant ID saved');
+      }
+
+      toast.success('Pendaftaran berhasil! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1000);
+    } catch (error) {
+      console.error('❌ Register error:', error);
+      if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error('Terjadi kesalahan saat pendaftaran');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const nextStep = () => {
     if (step === 1) {
-      if (!formData.tenantName || !formData.tenantType) {
-        toast.error('Lengkapi data institusi');
+      if (!formData.tenantName || !formData.tenantType || !formData.tenantAddress) {
+        toast.error('Lengkapi semua data institusi');
         return;
       }
     }
     if (step === 2) {
-      if (!formData.name || !formData.email) {
-        toast.error('Lengkapi data pengguna');
+      if (!formData.name || !formData.email || !formData.phone) {
+        toast.error('Lengkapi semua data pengguna');
+        return;
+      }
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error('Format email tidak valid');
+        return;
+      }
+    }
+    if (step === 3) {
+      if (!formData.password || !formData.confirmPassword) {
+        toast.error('Lengkapi password');
+        return;
+      }
+      if (formData.password.length < 8) {
+        toast.error('Password minimal 8 karakter');
         return;
       }
     }
