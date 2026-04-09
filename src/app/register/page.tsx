@@ -81,13 +81,23 @@ export default function RegisterPage() {
       if (!response.ok) {
         let errorMessage = 'Pendaftaran gagal';
         try {
-          const error = await response.json();
-          errorMessage = error.message || error.error || JSON.stringify(error);
-          console.error('❌ Error response:', error);
-        } catch (parseError) {
+          // Read body once and try to parse as JSON
           const text = await response.text();
-          console.error('❌ Error text:', text);
-          errorMessage = text || `HTTP ${response.status}`;
+          console.error('❌ Error response:', text);
+          
+          if (text) {
+            try {
+              const error = JSON.parse(text);
+              errorMessage = error.message || error.error || text;
+            } catch {
+              errorMessage = text || `HTTP ${response.status}`;
+            }
+          } else {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        } catch (parseError) {
+          console.error('❌ Failed to read error response:', parseError);
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         toast.error(errorMessage);
         setIsLoading(false);

@@ -15,6 +15,10 @@ COPY tailwind.config.ts ./
 COPY public ./public
 COPY src ./src
 
+# Copy environment files for build
+COPY .env.local ./
+COPY .env.example ./
+
 # Build the Next.js app
 RUN npm run build
 
@@ -35,6 +39,9 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.js ./next.config.js
+
+# Copy environment file for runtime
+COPY .env.local ./
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
